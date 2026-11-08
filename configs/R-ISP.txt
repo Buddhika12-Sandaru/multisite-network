@@ -1,0 +1,35 @@
+!======================================================================
+! R-ISP - Simulated internet router (Cisco 2911)
+! REFERENCE SCRIPT: replace with "show running-config" output from
+! your own device before publishing.
+!======================================================================
+enable
+configure terminal
+hostname R-ISP
+!
+interface gi0/0
+ description to R-HQ
+ ip address 203.0.113.1 255.255.255.252
+ no shutdown
+ exit
+interface loopback0
+ description Simulated internet host (8.8.8.8)
+ ip address 8.8.8.8 255.255.255.255
+ exit
+!
+! --- Device hardening: SSH only (lab-only passwords) ---
+enable secret Cisco@123
+service password-encryption
+ip domain-name lab.local
+username admin secret Admin@123
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+line console 0
+ password Cisco@123
+ login
+ end
+copy running-config startup-config

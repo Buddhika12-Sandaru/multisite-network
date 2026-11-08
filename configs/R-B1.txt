@@ -1,0 +1,83 @@
+!======================================================================
+! R-B1 - Branch 1 router (Cisco 2911)
+! Real export: output of "show running-config" from the Packet Tracer lab.
+! Password hashes were replaced with <REDACTED> and empty "!" lines removed.
+!======================================================================
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+!
+hostname R-B1
+!
+enable secret 5 <REDACTED>
+!
+ip dhcp excluded-address 192.168.101.1 192.168.101.10
+!
+ip dhcp pool B1-LAN
+ network 192.168.101.0 255.255.255.0
+ default-router 192.168.101.1
+ dns-server 8.8.8.8
+!
+no ip cef
+no ipv6 cef
+!
+username admin secret 5 <REDACTED>
+!
+ip ssh version 2
+ip domain-name lab.local
+!
+spanning-tree mode pvst
+!
+interface GigabitEthernet0/0
+ ip address 192.168.101.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface GigabitEthernet0/2
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface Serial0/3/0
+ ip address 10.0.12.2 255.255.255.252
+!
+interface Serial0/3/1
+ no ip address
+ clock rate 2000000
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router ospf 1
+ router-id 2.2.2.2
+ log-adjacency-changes
+ passive-interface default
+ no passive-interface Serial0/3/0
+ network 192.168.101.0 0.0.0.255 area 0
+ network 10.0.12.0 0.0.0.3 area 0
+!
+ip classless
+!
+ip flow-export version 9
+!
+line con 0
+ password 7 <REDACTED>
+ login
+!
+line aux 0
+!
+line vty 0 4
+ login local
+ transport input ssh
+!
+end

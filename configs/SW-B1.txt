@@ -1,0 +1,41 @@
+!======================================================================
+! SW-B1 - Branch 1 switch (Cisco 2960-24TT)
+! REFERENCE SCRIPT: replace with "show running-config" output from
+! your own device before publishing.
+! Fa0/1 = uplink to R-B1, Fa0/2 = PC-B1. Default VLAN 1 is used.
+!======================================================================
+enable
+configure terminal
+hostname SW-B1
+!
+interface fa0/1
+ description UPLINK to R-B1
+ exit
+interface fa0/2
+ description PC-B1
+ exit
+!
+! --- Shut unused ports ---
+interface range fa0/3 - 24
+ shutdown
+ exit
+interface range gi0/1 - 2
+ shutdown
+ exit
+!
+! --- Device hardening: SSH only (lab-only passwords) ---
+enable secret Cisco@123
+service password-encryption
+ip domain-name lab.local
+username admin secret Admin@123
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 15
+ transport input ssh
+ login local
+ exit
+line console 0
+ password Cisco@123
+ login
+ end
+copy running-config startup-config

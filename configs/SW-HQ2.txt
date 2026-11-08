@@ -1,0 +1,88 @@
+!======================================================================
+! SW-HQ2 - Head office switch 2 (Cisco 2960-24TT)
+! REFERENCE SCRIPT: replace with "show running-config" output from
+! your own device before publishing.
+!======================================================================
+enable
+configure terminal
+hostname SW-HQ2
+!
+! --- VLANs ---
+vlan 10
+ name STAFF
+vlan 20
+ name SERVERS
+vlan 30
+ name GUEST
+vlan 99
+ name MGMT
+ exit
+!
+! --- EtherChannel to SW-HQ1 (LACP) ---
+interface range fa0/23 - 24
+ channel-group 1 mode active
+ exit
+interface port-channel 1
+ switchport mode trunk
+ switchport trunk native vlan 99
+ switchport trunk allowed vlan 10,20,30,99
+ ip dhcp snooping trust
+ exit
+!
+! --- Access ports with port security ---
+interface fa0/1
+ description PC-Server (VLAN 20)
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ exit
+interface fa0/2
+ description PC-Guest (VLAN 30)
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ exit
+!
+! --- Shut unused ports ---
+interface range fa0/3 - 22
+ shutdown
+ exit
+interface range gi0/1 - 2
+ shutdown
+ exit
+!
+! --- Management address ---
+interface vlan 99
+ description Management
+ ip address 192.168.99.3 255.255.255.0
+ no shutdown
+ exit
+ip default-gateway 192.168.99.1
+!
+! --- DHCP snooping ---
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30
+no ip dhcp snooping information option
+!
+! --- Device hardening: SSH only (lab-only passwords) ---
+enable secret Cisco@123
+service password-encryption
+ip domain-name lab.local
+username admin secret Admin@123
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 15
+ transport input ssh
+ login local
+ exit
+line console 0
+ password Cisco@123
+ login
+ end
+copy running-config startup-config

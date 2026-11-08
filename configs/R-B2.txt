@@ -1,0 +1,53 @@
+!======================================================================
+! R-B2 - Branch 2 router (Cisco 2911)
+! REFERENCE SCRIPT: replace with "show running-config" output from
+! your own device before publishing.
+! Serial port: the HWIC module in this lab is in slot 3, so the port is s0/3/0.
+! (Not yet replaced with the real export from the device.)
+!======================================================================
+enable
+configure terminal
+hostname R-B2
+!
+interface gi0/0
+ description Branch 2 LAN
+ ip address 192.168.102.1 255.255.255.0
+ no shutdown
+ exit
+interface s0/3/0
+ description WAN to R-HQ
+ ip address 10.0.13.2 255.255.255.252
+ no shutdown
+ exit
+!
+router ospf 1
+ router-id 3.3.3.3
+ passive-interface default
+ no passive-interface s0/3/0
+ network 192.168.102.0 0.0.0.255 area 0
+ network 10.0.13.0 0.0.0.3 area 0
+ exit
+!
+ip dhcp excluded-address 192.168.102.1 192.168.102.10
+ip dhcp pool B2-LAN
+ network 192.168.102.0 255.255.255.0
+ default-router 192.168.102.1
+ dns-server 8.8.8.8
+ exit
+!
+! --- Device hardening: SSH only (lab-only passwords) ---
+enable secret Cisco@123
+service password-encryption
+ip domain-name lab.local
+username admin secret Admin@123
+crypto key generate rsa modulus 2048
+ip ssh version 2
+line vty 0 4
+ transport input ssh
+ login local
+ exit
+line console 0
+ password Cisco@123
+ login
+ end
+copy running-config startup-config
